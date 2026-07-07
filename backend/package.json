@@ -4,13 +4,13 @@
   "description": "Logistics and Freight Forwarding ERP System Backend",
   "main": "dist/server.js",
   "scripts": {
-  "dev": "nodemon src/server.ts",
-  "build": "prisma generate && tsc",
-  "start": "node dist/server.js",
-  "prisma:generate": "prisma generate",
-  "prisma:migrate": "prisma migrate dev",
-  "prisma:seed": "ts-node prisma/seed.ts"
-},
+    "dev": "nodemon src/server.ts",
+    "build": "npx prisma generate && tsc",
+    "start": "node dist/server.js",
+    "prisma:generate": "npx prisma generate",
+    "prisma:migrate": "npx prisma migrate deploy",
+    "prisma:seed": "ts-node prisma/seed.ts"
+  },
   "dependencies": {
     "@prisma/client": "^5.12.1",
     "bcryptjs": "^2.4.3",
