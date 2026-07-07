@@ -27,10 +27,11 @@ const authenticateJWT = (req, res, next) => {
 exports.authenticateJWT = authenticateJWT;
 const authorizeRoles = (...roles) => {
     return (req, res, next) => {
-        if (!req.user) {
+        const authReq = req;
+        if (!authReq.user) {
             return res.status(401).json({ message: 'Unauthorized' });
         }
-        if (!roles.includes(req.user.role)) {
+        if (!roles.includes(authReq.user.role)) {
             return res.status(403).json({ message: `Access denied. Requires one of these roles: ${roles.join(', ')}` });
         }
         next();

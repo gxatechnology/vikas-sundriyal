@@ -75,9 +75,10 @@ const createCustomer = async (req, res) => {
             },
         });
         // Log activity
+        const authReq = req;
         await db_1.default.auditLog.create({
             data: {
-                userId: req.user?.id,
+                userId: authReq.user?.id,
                 action: 'Create',
                 entity: 'CustomerProfile',
                 details: `Created customer profile: ${companyName}`,
@@ -115,9 +116,10 @@ const updateCustomer = async (req, res) => {
             },
         });
         // Log activity
+        const authReq = req;
         await db_1.default.auditLog.create({
             data: {
-                userId: req.user?.id,
+                userId: authReq.user?.id,
                 action: 'Update',
                 entity: 'CustomerProfile',
                 details: `Updated customer profile: ${companyName}`,
@@ -138,9 +140,10 @@ const deleteCustomer = async (req, res) => {
             where: { id: parseInt(id) },
         });
         // Log activity
+        const authReq = req;
         await db_1.default.auditLog.create({
             data: {
-                userId: req.user?.id,
+                userId: authReq.user?.id,
                 action: 'Delete',
                 entity: 'CustomerProfile',
                 details: `Deleted customer profile: ${profile.companyName}`,

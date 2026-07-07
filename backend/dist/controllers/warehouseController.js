@@ -111,9 +111,10 @@ const updateTransportation = async (req, res) => {
             },
         });
         // Log activity
+        const authReq = req;
         await db_1.default.auditLog.create({
             data: {
-                userId: req.user?.id,
+                userId: authReq.user?.id,
                 action: 'Update',
                 entity: 'Transportation',
                 details: `Updated transportation logistics for shipment ${transport.shipment.shipmentNumber}. Status: ${status}`,

@@ -24,9 +24,10 @@ const updateCustomsClearance = async (req, res) => {
             },
         });
         // Log Activity
+        const authReq = req;
         await db_1.default.auditLog.create({
             data: {
-                userId: req.user?.id,
+                userId: authReq.user?.id,
                 action: 'Update',
                 entity: 'CustomsClearance',
                 details: `Updated customs clearance for shipment ${customs.shipment.shipmentNumber}. Status: ${status}`,

@@ -7,13 +7,14 @@ exports.getDashboardMetrics = void 0;
 const db_1 = __importDefault(require("../db"));
 const getDashboardMetrics = async (req, res) => {
     try {
+        const authReq = req;
         let customerWhere = {};
         let shipmentWhere = {};
         let invoiceWhere = {};
         // If user is a customer, restrict stats to their profile
-        if (req.user?.role === 'CUSTOMER') {
+        if (authReq.user?.role === 'CUSTOMER') {
             const customerProfile = await db_1.default.customerProfile.findUnique({
-                where: { userId: req.user.id },
+                where: { userId: authReq.user.id },
             });
             if (customerProfile) {
                 const cId = customerProfile.id;
@@ -61,7 +62,7 @@ const getDashboardMetrics = async (req, res) => {
         const customsPending = await db_1.default.customsClearance.count({
             where: {
                 status: { not: 'Cleared' },
-                shipment: req.user?.role === 'CUSTOMER' ? shipmentWhere : undefined,
+                shipment: authReq.user?.role === 'CUSTOMER' ? shipmentWhere : undefined,
             },
         });
         // 6. Today's Deliveries

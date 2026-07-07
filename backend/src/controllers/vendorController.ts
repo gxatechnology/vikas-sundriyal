@@ -1,8 +1,8 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import prisma from '../db';
 import { AuthenticatedRequest } from '../middleware/auth';
 
-export const createVendor = async (req: AuthenticatedRequest, res: Response) => {
+export const createVendor = async (req: Request, res: Response) => {
   try {
     const { name, type, contactPerson, mobile, email, contractDetails, performanceScore } = req.body;
     const vendor = await prisma.vendor.create({
@@ -17,9 +17,10 @@ export const createVendor = async (req: AuthenticatedRequest, res: Response) => 
       },
     });
 
+    const authReq = req as AuthenticatedRequest;
     await prisma.auditLog.create({
       data: {
-        userId: req.user?.id,
+        userId: authReq.user?.id,
         action: 'Create',
         entity: 'Vendor',
         details: `Created vendor profile: ${name} (${type})`,
@@ -33,7 +34,7 @@ export const createVendor = async (req: AuthenticatedRequest, res: Response) => 
   }
 };
 
-export const getAllVendors = async (req: AuthenticatedRequest, res: Response) => {
+export const getAllVendors = async (req: Request, res: Response) => {
   try {
     const vendors = await prisma.vendor.findMany({
       orderBy: { name: 'asc' },
@@ -44,7 +45,7 @@ export const getAllVendors = async (req: AuthenticatedRequest, res: Response) =>
   }
 };
 
-export const updateVendor = async (req: AuthenticatedRequest, res: Response) => {
+export const updateVendor = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { name, type, contactPerson, mobile, email, contractDetails, performanceScore } = req.body;
@@ -62,9 +63,10 @@ export const updateVendor = async (req: AuthenticatedRequest, res: Response) => 
       },
     });
 
+    const authReq = req as AuthenticatedRequest;
     await prisma.auditLog.create({
       data: {
-        userId: req.user?.id,
+        userId: authReq.user?.id,
         action: 'Update',
         entity: 'Vendor',
         details: `Updated vendor details for: ${name}`,
@@ -78,16 +80,17 @@ export const updateVendor = async (req: AuthenticatedRequest, res: Response) => 
   }
 };
 
-export const deleteVendor = async (req: AuthenticatedRequest, res: Response) => {
+export const deleteVendor = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const vendor = await prisma.vendor.delete({
       where: { id: parseInt(id) },
     });
 
+    const authReq = req as AuthenticatedRequest;
     await prisma.auditLog.create({
       data: {
-        userId: req.user?.id,
+        userId: authReq.user?.id,
         action: 'Delete',
         entity: 'Vendor',
         details: `Deleted vendor profile: ${vendor.name}`,

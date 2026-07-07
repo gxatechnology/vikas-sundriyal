@@ -60,9 +60,10 @@ const createShipment = async (req, res) => {
                 },
             });
             // Log activity
+            const authReq = req;
             await tx.auditLog.create({
                 data: {
-                    userId: req.user?.id,
+                    userId: authReq.user?.id,
                     action: 'Create',
                     entity: 'Shipment',
                     details: `Created shipment ${shipmentNumber}`,
@@ -81,12 +82,13 @@ const createShipment = async (req, res) => {
 exports.createShipment = createShipment;
 const getAllShipments = async (req, res) => {
     try {
+        const authReq = req;
         const { search, status, mode } = req.query;
         let whereClause = {};
         // Filter by customer if user is CUSTOMER
-        if (req.user?.role === 'CUSTOMER') {
+        if (authReq.user?.role === 'CUSTOMER') {
             const customerProfile = await db_1.default.customerProfile.findUnique({
-                where: { userId: req.user.id },
+                where: { userId: authReq.user.id },
             });
             if (customerProfile) {
                 whereClause.customerId = customerProfile.id;
@@ -128,6 +130,7 @@ const getAllShipments = async (req, res) => {
 exports.getAllShipments = getAllShipments;
 const getShipmentById = async (req, res) => {
     try {
+        const authReq = req;
         const { id } = req.params;
         const shipment = await db_1.default.shipment.findUnique({
             where: { id: parseInt(id) },
@@ -148,9 +151,9 @@ const getShipmentById = async (req, res) => {
             return res.status(404).json({ message: 'Shipment not found' });
         }
         // Customer can only view their own shipments
-        if (req.user?.role === 'CUSTOMER') {
+        if (authReq.user?.role === 'CUSTOMER') {
             const profile = await db_1.default.customerProfile.findUnique({
-                where: { userId: req.user.id },
+                where: { userId: authReq.user.id },
             });
             if (!profile || shipment.customerId !== profile.id) {
                 return res.status(403).json({ message: 'Access denied' });
@@ -180,9 +183,10 @@ const updateShipmentStatus = async (req, res) => {
             data: updateData,
         });
         // Log activity
+        const authReq = req;
         await db_1.default.auditLog.create({
             data: {
-                userId: req.user?.id,
+                userId: authReq.user?.id,
                 action: 'Update',
                 entity: 'Shipment',
                 details: `Updated shipment status from ${oldShipment.status} to ${status}. Remarks: ${remarks || 'None'}`,
@@ -252,9 +256,10 @@ const updateFreightDetails = async (req, res) => {
             },
         });
         // Log Activity
+        const authReq = req;
         await db_1.default.auditLog.create({
             data: {
-                userId: req.user?.id,
+                userId: authReq.user?.id,
                 action: 'Update',
                 entity: 'Shipment',
                 details: `Updated freight carrier details for shipment ${shipment.shipmentNumber}`,

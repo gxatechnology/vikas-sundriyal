@@ -1,8 +1,8 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import prisma from '../db';
 import { AuthenticatedRequest } from '../middleware/auth';
 
-export const createShipment = async (req: AuthenticatedRequest, res: Response) => {
+export const createShipment = async (req: Request, res: Response) => {
   try {
     const {
       customerId,
@@ -86,9 +86,10 @@ export const createShipment = async (req: AuthenticatedRequest, res: Response) =
       });
 
       // Log activity
+      const authReq = req as AuthenticatedRequest;
       await tx.auditLog.create({
         data: {
-          userId: req.user?.id,
+          userId: authReq.user?.id,
           action: 'Create',
           entity: 'Shipment',
           details: `Created shipment ${shipmentNumber}`,
@@ -106,16 +107,17 @@ export const createShipment = async (req: AuthenticatedRequest, res: Response) =
   }
 };
 
-export const getAllShipments = async (req: AuthenticatedRequest, res: Response) => {
+export const getAllShipments = async (req: Request, res: Response) => {
   try {
+    const authReq = req as AuthenticatedRequest;
     const { search, status, mode } = req.query;
 
     let whereClause: any = {};
 
     // Filter by customer if user is CUSTOMER
-    if (req.user?.role === 'CUSTOMER') {
+    if (authReq.user?.role === 'CUSTOMER') {
       const customerProfile = await prisma.customerProfile.findUnique({
-        where: { userId: req.user.id },
+        where: { userId: authReq.user.id },
       });
       if (customerProfile) {
         whereClause.customerId = customerProfile.id;
@@ -157,8 +159,9 @@ export const getAllShipments = async (req: AuthenticatedRequest, res: Response) 
   }
 };
 
-export const getShipmentById = async (req: AuthenticatedRequest, res: Response) => {
+export const getShipmentById = async (req: Request, res: Response) => {
   try {
+    const authReq = req as AuthenticatedRequest;
     const { id } = req.params;
 
     const shipment = await prisma.shipment.findUnique({
@@ -182,9 +185,9 @@ export const getShipmentById = async (req: AuthenticatedRequest, res: Response) 
     }
 
     // Customer can only view their own shipments
-    if (req.user?.role === 'CUSTOMER') {
+    if (authReq.user?.role === 'CUSTOMER') {
       const profile = await prisma.customerProfile.findUnique({
-        where: { userId: req.user.id },
+        where: { userId: authReq.user.id },
       });
       if (!profile || shipment.customerId !== profile.id) {
         return res.status(403).json({ message: 'Access denied' });
@@ -197,7 +200,7 @@ export const getShipmentById = async (req: AuthenticatedRequest, res: Response) 
   }
 };
 
-export const updateShipmentStatus = async (req: AuthenticatedRequest, res: Response) => {
+export const updateShipmentStatus = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { status, remarks } = req.body;
@@ -218,9 +221,10 @@ export const updateShipmentStatus = async (req: AuthenticatedRequest, res: Respo
     });
 
     // Log activity
+    const authReq = req as AuthenticatedRequest;
     await prisma.auditLog.create({
       data: {
-        userId: req.user?.id,
+        userId: authReq.user?.id,
         action: 'Update',
         entity: 'Shipment',
         details: `Updated shipment status from ${oldShipment.status} to ${status}. Remarks: ${remarks || 'None'}`,
@@ -245,7 +249,7 @@ export const updateShipmentStatus = async (req: AuthenticatedRequest, res: Respo
   }
 };
 
-export const updateShipmentLocation = async (req: AuthenticatedRequest, res: Response) => {
+export const updateShipmentLocation = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { lat, lng } = req.body;
@@ -275,7 +279,7 @@ export const updateShipmentLocation = async (req: AuthenticatedRequest, res: Res
   }
 };
 
-export const updateFreightDetails = async (req: AuthenticatedRequest, res: Response) => {
+export const updateFreightDetails = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const {
@@ -304,9 +308,10 @@ export const updateFreightDetails = async (req: AuthenticatedRequest, res: Respo
     });
 
     // Log Activity
+    const authReq = req as AuthenticatedRequest;
     await prisma.auditLog.create({
       data: {
-        userId: req.user?.id,
+        userId: authReq.user?.id,
         action: 'Update',
         entity: 'Shipment',
         details: `Updated freight carrier details for shipment ${shipment.shipmentNumber}`,

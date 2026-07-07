@@ -41,9 +41,10 @@ const createInvoice = async (req, res) => {
                 });
             }
             // Log activity
+            const authReq = req;
             await tx.auditLog.create({
                 data: {
-                    userId: req.user?.id,
+                    userId: authReq.user?.id,
                     action: 'Create',
                     entity: 'Invoice',
                     details: `Generated invoice ${invoiceNumber} for amount INR ${grandTotal.toFixed(2)}`,
@@ -62,10 +63,11 @@ const createInvoice = async (req, res) => {
 exports.createInvoice = createInvoice;
 const getAllInvoices = async (req, res) => {
     try {
+        const authReq = req;
         let whereClause = {};
-        if (req.user?.role === 'CUSTOMER') {
+        if (authReq.user?.role === 'CUSTOMER') {
             const profile = await db_1.default.customerProfile.findUnique({
-                where: { userId: req.user.id },
+                where: { userId: authReq.user.id },
             });
             if (profile) {
                 whereClause.customerId = profile.id;
@@ -166,9 +168,10 @@ const addPayment = async (req, res) => {
                 data: { status: newStatus },
             });
             // Log Activity
+            const authReq = req;
             await tx.auditLog.create({
                 data: {
-                    userId: req.user?.id,
+                    userId: authReq.user?.id,
                     action: 'Create',
                     entity: 'Payment',
                     details: `Processed payment of INR ${parsedAmount.toFixed(2)} for Invoice ${invoice.invoiceNumber}. Receipt No: ${receiptNumber}`,

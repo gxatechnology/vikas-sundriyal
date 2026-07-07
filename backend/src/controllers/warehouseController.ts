@@ -1,9 +1,9 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import prisma from '../db';
 import { AuthenticatedRequest } from '../middleware/auth';
 
 // Warehousing
-export const createWarehouse = async (req: AuthenticatedRequest, res: Response) => {
+export const createWarehouse = async (req: Request, res: Response) => {
   try {
     const { name, location, capacity } = req.body;
     const warehouse = await prisma.warehouse.create({
@@ -15,7 +15,7 @@ export const createWarehouse = async (req: AuthenticatedRequest, res: Response) 
   }
 };
 
-export const getAllWarehouses = async (req: AuthenticatedRequest, res: Response) => {
+export const getAllWarehouses = async (req: Request, res: Response) => {
   try {
     const warehouses = await prisma.warehouse.findMany({
       include: { inventory: true },
@@ -26,7 +26,7 @@ export const getAllWarehouses = async (req: AuthenticatedRequest, res: Response)
   }
 };
 
-export const addInventoryItem = async (req: AuthenticatedRequest, res: Response) => {
+export const addInventoryItem = async (req: Request, res: Response) => {
   try {
     const { warehouseId, cargoDescription, shipmentNumber, rackLocation, quantity, status } = req.body;
     const item = await prisma.inventory.create({
@@ -37,7 +37,7 @@ export const addInventoryItem = async (req: AuthenticatedRequest, res: Response)
         rackLocation,
         quantity: parseInt(quantity || '1'),
         status,
-        movementLog: `Received in warehouse by User ID ${req.user?.id} at ${new Date().toISOString()}`,
+        movementLog: `Received in warehouse by User ID ${(req as AuthenticatedRequest).user?.id} at ${new Date().toISOString()}`,
       },
     });
     return res.status(201).json({ message: 'Inventory item recorded', item });
@@ -46,7 +46,7 @@ export const addInventoryItem = async (req: AuthenticatedRequest, res: Response)
   }
 };
 
-export const getInventory = async (req: AuthenticatedRequest, res: Response) => {
+export const getInventory = async (req: Request, res: Response) => {
   try {
     const inventory = await prisma.inventory.findMany({
       include: { warehouse: { select: { name: true } } },
@@ -57,7 +57,7 @@ export const getInventory = async (req: AuthenticatedRequest, res: Response) => 
   }
 };
 
-export const updateInventoryItem = async (req: AuthenticatedRequest, res: Response) => {
+export const updateInventoryItem = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { status, rackLocation, movementNote } = req.body;
@@ -85,7 +85,7 @@ export const updateInventoryItem = async (req: AuthenticatedRequest, res: Respon
 };
 
 // Transportation
-export const updateTransportation = async (req: AuthenticatedRequest, res: Response) => {
+export const updateTransportation = async (req: Request, res: Response) => {
   try {
     const { shipmentId } = req.params;
     const {
@@ -119,9 +119,10 @@ export const updateTransportation = async (req: AuthenticatedRequest, res: Respo
     });
 
     // Log activity
+    const authReq = req as AuthenticatedRequest;
     await prisma.auditLog.create({
       data: {
-        userId: req.user?.id,
+        userId: authReq.user?.id,
         action: 'Update',
         entity: 'Transportation',
         details: `Updated transportation logistics for shipment ${transport.shipment.shipmentNumber}. Status: ${status}`,
@@ -135,7 +136,7 @@ export const updateTransportation = async (req: AuthenticatedRequest, res: Respo
   }
 };
 
-export const getTransportationList = async (req: AuthenticatedRequest, res: Response) => {
+export const getTransportationList = async (req: Request, res: Response) => {
   try {
     const transportList = await prisma.transportation.findMany({
       include: {

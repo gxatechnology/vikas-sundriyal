@@ -136,12 +136,13 @@ export const login = async (req: Request, res: Response) => {
   }
 };
 
-export const getProfile = async (req: AuthenticatedRequest, res: Response) => {
+export const getProfile = async (req: Request, res: Response) => {
   try {
-    if (!req.user) return res.status(401).json({ message: 'Unauthorized' });
+    const authReq = req as AuthenticatedRequest;
+    if (!authReq.user) return res.status(401).json({ message: 'Unauthorized' });
 
     const user = await prisma.user.findUnique({
-      where: { id: req.user.id },
+      where: { id: authReq.user.id },
       include: {
         customer: true,
         employee: true,
@@ -158,7 +159,7 @@ export const getProfile = async (req: AuthenticatedRequest, res: Response) => {
   }
 };
 
-export const getAllEmployees = async (req: AuthenticatedRequest, res: Response) => {
+export const getAllEmployees = async (req: Request, res: Response) => {
   try {
     const employees = await prisma.employeeProfile.findMany({
       include: { user: { select: { email: true, createdAt: true } } },
@@ -169,7 +170,7 @@ export const getAllEmployees = async (req: AuthenticatedRequest, res: Response) 
   }
 };
 
-export const updateEmployee = async (req: AuthenticatedRequest, res: Response) => {
+export const updateEmployee = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { name, mobile, salary, attendance, leaveRecords } = req.body;
@@ -180,9 +181,10 @@ export const updateEmployee = async (req: AuthenticatedRequest, res: Response) =
     });
 
     // Log edit
+    const authReq = req as AuthenticatedRequest;
     await prisma.auditLog.create({
       data: {
-        userId: req.user?.id,
+        userId: authReq.user?.id,
         action: 'Update',
         entity: 'EmployeeProfile',
         details: `Updated employee profile: ${employee.employeeId}`,

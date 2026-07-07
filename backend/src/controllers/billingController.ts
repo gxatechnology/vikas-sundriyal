@@ -3,7 +3,7 @@ import prisma from '../db';
 import { AuthenticatedRequest } from '../middleware/auth';
 import { generateInvoicePDF, generateQuotationPDF } from '../utils/helpers';
 
-export const createInvoice = async (req: AuthenticatedRequest, res: Response) => {
+export const createInvoice = async (req: Request, res: Response) => {
   try {
     const { shipmentId, customerId, dueDate, items, taxRate = 18.0 } = req.body;
 
@@ -43,9 +43,10 @@ export const createInvoice = async (req: AuthenticatedRequest, res: Response) =>
       }
 
       // Log activity
+      const authReq = req as AuthenticatedRequest;
       await tx.auditLog.create({
         data: {
-          userId: req.user?.id,
+          userId: authReq.user?.id,
           action: 'Create',
           entity: 'Invoice',
           details: `Generated invoice ${invoiceNumber} for amount INR ${grandTotal.toFixed(2)}`,
@@ -63,13 +64,14 @@ export const createInvoice = async (req: AuthenticatedRequest, res: Response) =>
   }
 };
 
-export const getAllInvoices = async (req: AuthenticatedRequest, res: Response) => {
+export const getAllInvoices = async (req: Request, res: Response) => {
   try {
+    const authReq = req as AuthenticatedRequest;
     let whereClause: any = {};
 
-    if (req.user?.role === 'CUSTOMER') {
+    if (authReq.user?.role === 'CUSTOMER') {
       const profile = await prisma.customerProfile.findUnique({
-        where: { userId: req.user.id },
+        where: { userId: authReq.user.id },
       });
       if (profile) {
         whereClause.customerId = profile.id;
@@ -93,7 +95,7 @@ export const getAllInvoices = async (req: AuthenticatedRequest, res: Response) =
   }
 };
 
-export const getInvoiceById = async (req: AuthenticatedRequest, res: Response) => {
+export const getInvoiceById = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const invoice = await prisma.invoice.findUnique({
@@ -138,7 +140,7 @@ export const downloadInvoicePDF = async (req: Request, res: Response) => {
   }
 };
 
-export const addPayment = async (req: AuthenticatedRequest, res: Response) => {
+export const addPayment = async (req: Request, res: Response) => {
   try {
     const { invoiceId, amount, paymentMethod, referenceNumber } = req.body;
 
@@ -180,9 +182,10 @@ export const addPayment = async (req: AuthenticatedRequest, res: Response) => {
       });
 
       // Log Activity
+      const authReq = req as AuthenticatedRequest;
       await tx.auditLog.create({
         data: {
-          userId: req.user?.id,
+          userId: authReq.user?.id,
           action: 'Create',
           entity: 'Payment',
           details: `Processed payment of INR ${parsedAmount.toFixed(2)} for Invoice ${invoice.invoiceNumber}. Receipt No: ${receiptNumber}`,
@@ -199,7 +202,7 @@ export const addPayment = async (req: AuthenticatedRequest, res: Response) => {
   }
 };
 
-export const generateQuotation = async (req: AuthenticatedRequest, res: Response) => {
+export const generateQuotation = async (req: Request, res: Response) => {
   try {
     const { companyName, contactPerson, email, origin, destination, mode, grossWeight, commodity, charges } = req.body;
     

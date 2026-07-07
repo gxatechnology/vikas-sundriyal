@@ -130,10 +130,11 @@ const login = async (req, res) => {
 exports.login = login;
 const getProfile = async (req, res) => {
     try {
-        if (!req.user)
+        const authReq = req;
+        if (!authReq.user)
             return res.status(401).json({ message: 'Unauthorized' });
         const user = await db_1.default.user.findUnique({
-            where: { id: req.user.id },
+            where: { id: authReq.user.id },
             include: {
                 customer: true,
                 employee: true,
@@ -170,9 +171,10 @@ const updateEmployee = async (req, res) => {
             data: { name, mobile, salary: parseFloat(salary || '0'), attendance, leaveRecords },
         });
         // Log edit
+        const authReq = req;
         await db_1.default.auditLog.create({
             data: {
-                userId: req.user?.id,
+                userId: authReq.user?.id,
                 action: 'Update',
                 entity: 'EmployeeProfile',
                 details: `Updated employee profile: ${employee.employeeId}`,

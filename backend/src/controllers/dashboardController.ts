@@ -1,17 +1,18 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import prisma from '../db';
 import { AuthenticatedRequest } from '../middleware/auth';
 
-export const getDashboardMetrics = async (req: AuthenticatedRequest, res: Response) => {
+export const getDashboardMetrics = async (req: Request, res: Response) => {
   try {
+    const authReq = req as AuthenticatedRequest;
     let customerWhere: any = {};
     let shipmentWhere: any = {};
     let invoiceWhere: any = {};
 
     // If user is a customer, restrict stats to their profile
-    if (req.user?.role === 'CUSTOMER') {
+    if (authReq.user?.role === 'CUSTOMER') {
       const customerProfile = await prisma.customerProfile.findUnique({
-        where: { userId: req.user.id },
+        where: { userId: authReq.user.id },
       });
       if (customerProfile) {
         const cId = customerProfile.id;
@@ -63,7 +64,7 @@ export const getDashboardMetrics = async (req: AuthenticatedRequest, res: Respon
     const customsPending = await prisma.customsClearance.count({
       where: {
         status: { not: 'Cleared' },
-        shipment: req.user?.role === 'CUSTOMER' ? shipmentWhere : undefined,
+        shipment: authReq.user?.role === 'CUSTOMER' ? shipmentWhere : undefined,
       },
     });
 

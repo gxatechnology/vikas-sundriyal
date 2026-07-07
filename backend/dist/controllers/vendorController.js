@@ -19,9 +19,10 @@ const createVendor = async (req, res) => {
                 performanceScore: performanceScore ? parseFloat(performanceScore) : undefined,
             },
         });
+        const authReq = req;
         await db_1.default.auditLog.create({
             data: {
-                userId: req.user?.id,
+                userId: authReq.user?.id,
                 action: 'Create',
                 entity: 'Vendor',
                 details: `Created vendor profile: ${name} (${type})`,
@@ -63,9 +64,10 @@ const updateVendor = async (req, res) => {
                 performanceScore: performanceScore ? parseFloat(performanceScore) : undefined,
             },
         });
+        const authReq = req;
         await db_1.default.auditLog.create({
             data: {
-                userId: req.user?.id,
+                userId: authReq.user?.id,
                 action: 'Update',
                 entity: 'Vendor',
                 details: `Updated vendor details for: ${name}`,
@@ -85,9 +87,10 @@ const deleteVendor = async (req, res) => {
         const vendor = await db_1.default.vendor.delete({
             where: { id: parseInt(id) },
         });
+        const authReq = req;
         await db_1.default.auditLog.create({
             data: {
-                userId: req.user?.id,
+                userId: authReq.user?.id,
                 action: 'Delete',
                 entity: 'Vendor',
                 details: `Deleted vendor profile: ${vendor.name}`,

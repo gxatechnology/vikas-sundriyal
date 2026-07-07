@@ -1,14 +1,15 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import prisma from '../db';
 import { AuthenticatedRequest } from '../middleware/auth';
 
-export const uploadDocument = async (req: AuthenticatedRequest, res: Response) => {
+export const uploadDocument = async (req: Request, res: Response) => {
   try {
+    const authReq = req as AuthenticatedRequest;
     const { name, type, shipmentId, customerId } = req.body;
     if (!req.file) {
       return res.status(400).json({ message: 'No file uploaded' });
     }
-    if (!req.user) return res.status(401).json({ message: 'Unauthorized' });
+    if (!authReq.user) return res.status(401).json({ message: 'Unauthorized' });
 
     // File URL will point to our static endpoint
     const fileUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
@@ -20,14 +21,14 @@ export const uploadDocument = async (req: AuthenticatedRequest, res: Response) =
         fileUrl,
         shipmentId: shipmentId ? parseInt(shipmentId) : null,
         customerId: customerId ? parseInt(customerId) : null,
-        uploadedById: req.user.id,
+        uploadedById: authReq.user.id,
         status: 'Pending',
       },
     });
 
     await prisma.auditLog.create({
       data: {
-        userId: req.user.id,
+        userId: authReq.user.id,
         action: 'Create',
         entity: 'Document',
         details: `Uploaded document: ${document.name} of type ${type}`,
@@ -42,13 +43,14 @@ export const uploadDocument = async (req: AuthenticatedRequest, res: Response) =
   }
 };
 
-export const getDocuments = async (req: AuthenticatedRequest, res: Response) => {
+export const getDocuments = async (req: Request, res: Response) => {
   try {
+    const authReq = req as AuthenticatedRequest;
     let whereClause: any = {};
 
-    if (req.user?.role === 'CUSTOMER') {
+    if (authReq.user?.role === 'CUSTOMER') {
       const profile = await prisma.customerProfile.findUnique({
-        where: { userId: req.user.id },
+        where: { userId: authReq.user.id },
       });
       if (profile) {
         whereClause.OR = [
@@ -77,18 +79,19 @@ export const getDocuments = async (req: AuthenticatedRequest, res: Response) => 
   }
 };
 
-export const approveDocument = async (req: AuthenticatedRequest, res: Response) => {
+export const approveDocument = async (req: Request, res: Response) => {
   try {
+    const authReq = req as AuthenticatedRequest;
     const { id } = req.params;
     const { status } = req.body; // Approved or Rejected
 
-    if (!req.user) return res.status(401).json({ message: 'Unauthorized' });
+    if (!authReq.user) return res.status(401).json({ message: 'Unauthorized' });
 
     const document = await prisma.document.update({
       where: { id: parseInt(id) },
       data: {
         status,
-        approvedById: req.user.id,
+        approvedById: authReq.user.id,
       },
       include: {
         uploadedBy: { select: { email: true } },
@@ -97,7 +100,7 @@ export const approveDocument = async (req: AuthenticatedRequest, res: Response) 
 
     await prisma.auditLog.create({
       data: {
-        userId: req.user.id,
+        userId: authReq.user.id,
         action: 'Approve',
         entity: 'Document',
         details: `Set status of document ${document.name} to ${status}`,

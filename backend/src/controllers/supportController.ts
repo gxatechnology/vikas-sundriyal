@@ -1,11 +1,12 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import prisma from '../db';
 import { AuthenticatedRequest } from '../middleware/auth';
 
-export const createTicket = async (req: AuthenticatedRequest, res: Response) => {
+export const createTicket = async (req: Request, res: Response) => {
   try {
+    const authReq = req as AuthenticatedRequest;
     const { title, description, priority } = req.body;
-    if (!req.user) return res.status(401).json({ message: 'Unauthorized' });
+    if (!authReq.user) return res.status(401).json({ message: 'Unauthorized' });
 
     const count = await prisma.supportTicket.count();
     const ticketNumber = `TKT-${50000 + count + 1}`;
@@ -16,13 +17,13 @@ export const createTicket = async (req: AuthenticatedRequest, res: Response) => 
         title,
         description,
         priority: priority || 'Medium',
-        createdById: req.user.id,
+        createdById: authReq.user.id,
       },
     });
 
     await prisma.auditLog.create({
       data: {
-        userId: req.user.id,
+        userId: authReq.user.id,
         action: 'Create',
         entity: 'SupportTicket',
         details: `Opened support ticket: ${ticketNumber}`,
@@ -36,11 +37,12 @@ export const createTicket = async (req: AuthenticatedRequest, res: Response) => 
   }
 };
 
-export const getTickets = async (req: AuthenticatedRequest, res: Response) => {
+export const getTickets = async (req: Request, res: Response) => {
   try {
+    const authReq = req as AuthenticatedRequest;
     let whereClause = {};
-    if (req.user?.role === 'CUSTOMER') {
-      whereClause = { createdById: req.user.id };
+    if (authReq.user?.role === 'CUSTOMER') {
+      whereClause = { createdById: authReq.user.id };
     }
 
     const tickets = await prisma.supportTicket.findMany({
@@ -57,7 +59,7 @@ export const getTickets = async (req: AuthenticatedRequest, res: Response) => {
   }
 };
 
-export const updateTicketStatus = async (req: AuthenticatedRequest, res: Response) => {
+export const updateTicketStatus = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
@@ -67,9 +69,10 @@ export const updateTicketStatus = async (req: AuthenticatedRequest, res: Respons
       data: { status, updatedAt: new Date() },
     });
 
+    const authReq = req as AuthenticatedRequest;
     await prisma.auditLog.create({
       data: {
-        userId: req.user?.id,
+        userId: authReq.user?.id,
         action: 'Update',
         entity: 'SupportTicket',
         details: `Updated ticket ${ticket.ticketNumber} status to ${status}`,
@@ -83,7 +86,7 @@ export const updateTicketStatus = async (req: AuthenticatedRequest, res: Respons
   }
 };
 
-export const getAuditLogs = async (req: AuthenticatedRequest, res: Response) => {
+export const getAuditLogs = async (req: Request, res: Response) => {
   try {
     const logs = await prisma.auditLog.findMany({
       include: {

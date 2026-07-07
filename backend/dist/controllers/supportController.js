@@ -7,8 +7,9 @@ exports.getAuditLogs = exports.updateTicketStatus = exports.getTickets = exports
 const db_1 = __importDefault(require("../db"));
 const createTicket = async (req, res) => {
     try {
+        const authReq = req;
         const { title, description, priority } = req.body;
-        if (!req.user)
+        if (!authReq.user)
             return res.status(401).json({ message: 'Unauthorized' });
         const count = await db_1.default.supportTicket.count();
         const ticketNumber = `TKT-${50000 + count + 1}`;
@@ -18,12 +19,12 @@ const createTicket = async (req, res) => {
                 title,
                 description,
                 priority: priority || 'Medium',
-                createdById: req.user.id,
+                createdById: authReq.user.id,
             },
         });
         await db_1.default.auditLog.create({
             data: {
-                userId: req.user.id,
+                userId: authReq.user.id,
                 action: 'Create',
                 entity: 'SupportTicket',
                 details: `Opened support ticket: ${ticketNumber}`,
@@ -39,9 +40,10 @@ const createTicket = async (req, res) => {
 exports.createTicket = createTicket;
 const getTickets = async (req, res) => {
     try {
+        const authReq = req;
         let whereClause = {};
-        if (req.user?.role === 'CUSTOMER') {
-            whereClause = { createdById: req.user.id };
+        if (authReq.user?.role === 'CUSTOMER') {
+            whereClause = { createdById: authReq.user.id };
         }
         const tickets = await db_1.default.supportTicket.findMany({
             where: whereClause,
@@ -65,9 +67,10 @@ const updateTicketStatus = async (req, res) => {
             where: { id: parseInt(id) },
             data: { status, updatedAt: new Date() },
         });
+        const authReq = req;
         await db_1.default.auditLog.create({
             data: {
-                userId: req.user?.id,
+                userId: authReq.user?.id,
                 action: 'Update',
                 entity: 'SupportTicket',
                 details: `Updated ticket ${ticket.ticketNumber} status to ${status}`,

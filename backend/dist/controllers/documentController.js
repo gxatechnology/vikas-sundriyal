@@ -7,11 +7,12 @@ exports.approveDocument = exports.getDocuments = exports.uploadDocument = void 0
 const db_1 = __importDefault(require("../db"));
 const uploadDocument = async (req, res) => {
     try {
+        const authReq = req;
         const { name, type, shipmentId, customerId } = req.body;
         if (!req.file) {
             return res.status(400).json({ message: 'No file uploaded' });
         }
-        if (!req.user)
+        if (!authReq.user)
             return res.status(401).json({ message: 'Unauthorized' });
         // File URL will point to our static endpoint
         const fileUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
@@ -22,13 +23,13 @@ const uploadDocument = async (req, res) => {
                 fileUrl,
                 shipmentId: shipmentId ? parseInt(shipmentId) : null,
                 customerId: customerId ? parseInt(customerId) : null,
-                uploadedById: req.user.id,
+                uploadedById: authReq.user.id,
                 status: 'Pending',
             },
         });
         await db_1.default.auditLog.create({
             data: {
-                userId: req.user.id,
+                userId: authReq.user.id,
                 action: 'Create',
                 entity: 'Document',
                 details: `Uploaded document: ${document.name} of type ${type}`,
@@ -45,10 +46,11 @@ const uploadDocument = async (req, res) => {
 exports.uploadDocument = uploadDocument;
 const getDocuments = async (req, res) => {
     try {
+        const authReq = req;
         let whereClause = {};
-        if (req.user?.role === 'CUSTOMER') {
+        if (authReq.user?.role === 'CUSTOMER') {
             const profile = await db_1.default.customerProfile.findUnique({
-                where: { userId: req.user.id },
+                where: { userId: authReq.user.id },
             });
             if (profile) {
                 whereClause.OR = [
@@ -79,15 +81,16 @@ const getDocuments = async (req, res) => {
 exports.getDocuments = getDocuments;
 const approveDocument = async (req, res) => {
     try {
+        const authReq = req;
         const { id } = req.params;
         const { status } = req.body; // Approved or Rejected
-        if (!req.user)
+        if (!authReq.user)
             return res.status(401).json({ message: 'Unauthorized' });
         const document = await db_1.default.document.update({
             where: { id: parseInt(id) },
             data: {
                 status,
-                approvedById: req.user.id,
+                approvedById: authReq.user.id,
             },
             include: {
                 uploadedBy: { select: { email: true } },
@@ -95,7 +98,7 @@ const approveDocument = async (req, res) => {
         });
         await db_1.default.auditLog.create({
             data: {
-                userId: req.user.id,
+                userId: authReq.user.id,
                 action: 'Approve',
                 entity: 'Document',
                 details: `Set status of document ${document.name} to ${status}`,

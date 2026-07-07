@@ -1,8 +1,8 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import prisma from '../db';
 import { AuthenticatedRequest } from '../middleware/auth';
 
-export const getAllCustomers = async (req: AuthenticatedRequest, res: Response) => {
+export const getAllCustomers = async (req: Request, res: Response) => {
   try {
     const { search } = req.query;
     let whereClause = {};
@@ -31,7 +31,7 @@ export const getAllCustomers = async (req: AuthenticatedRequest, res: Response) 
   }
 };
 
-export const getCustomerById = async (req: AuthenticatedRequest, res: Response) => {
+export const getCustomerById = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const customer = await prisma.customerProfile.findUnique({
@@ -53,7 +53,7 @@ export const getCustomerById = async (req: AuthenticatedRequest, res: Response) 
   }
 };
 
-export const createCustomer = async (req: AuthenticatedRequest, res: Response) => {
+export const createCustomer = async (req: Request, res: Response) => {
   try {
     const {
       companyName,
@@ -92,9 +92,10 @@ export const createCustomer = async (req: AuthenticatedRequest, res: Response) =
     });
 
     // Log activity
+    const authReq = req as AuthenticatedRequest;
     await prisma.auditLog.create({
       data: {
-        userId: req.user?.id,
+        userId: authReq.user?.id,
         action: 'Create',
         entity: 'CustomerProfile',
         details: `Created customer profile: ${companyName}`,
@@ -108,7 +109,7 @@ export const createCustomer = async (req: AuthenticatedRequest, res: Response) =
   }
 };
 
-export const updateCustomer = async (req: AuthenticatedRequest, res: Response) => {
+export const updateCustomer = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const {
@@ -149,9 +150,10 @@ export const updateCustomer = async (req: AuthenticatedRequest, res: Response) =
     });
 
     // Log activity
+    const authReq = req as AuthenticatedRequest;
     await prisma.auditLog.create({
       data: {
-        userId: req.user?.id,
+        userId: authReq.user?.id,
         action: 'Update',
         entity: 'CustomerProfile',
         details: `Updated customer profile: ${companyName}`,
@@ -165,7 +167,7 @@ export const updateCustomer = async (req: AuthenticatedRequest, res: Response) =
   }
 };
 
-export const deleteCustomer = async (req: AuthenticatedRequest, res: Response) => {
+export const deleteCustomer = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -174,9 +176,10 @@ export const deleteCustomer = async (req: AuthenticatedRequest, res: Response) =
     });
 
     // Log activity
+    const authReq = req as AuthenticatedRequest;
     await prisma.auditLog.create({
       data: {
-        userId: req.user?.id,
+        userId: authReq.user?.id,
         action: 'Delete',
         entity: 'CustomerProfile',
         details: `Deleted customer profile: ${profile.companyName}`,

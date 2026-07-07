@@ -1,8 +1,8 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import prisma from '../db';
 import { AuthenticatedRequest } from '../middleware/auth';
 
-export const updateCustomsClearance = async (req: AuthenticatedRequest, res: Response) => {
+export const updateCustomsClearance = async (req: Request, res: Response) => {
   try {
     const { shipmentId } = req.params;
     const { billOfEntry, shippingBill, dutyAmount, status, remarks, clearanceDate } = req.body;
@@ -23,9 +23,10 @@ export const updateCustomsClearance = async (req: AuthenticatedRequest, res: Res
     });
 
     // Log Activity
+    const authReq = req as AuthenticatedRequest;
     await prisma.auditLog.create({
       data: {
-        userId: req.user?.id,
+        userId: authReq.user?.id,
         action: 'Update',
         entity: 'CustomsClearance',
         details: `Updated customs clearance for shipment ${customs.shipment.shipmentNumber}. Status: ${status}`,
@@ -49,7 +50,7 @@ export const updateCustomsClearance = async (req: AuthenticatedRequest, res: Res
   }
 };
 
-export const getCustomsStatus = async (req: AuthenticatedRequest, res: Response) => {
+export const getCustomsStatus = async (req: Request, res: Response) => {
   try {
     const customsList = await prisma.customsClearance.findMany({
       include: {
