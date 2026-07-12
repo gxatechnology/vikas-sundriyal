@@ -1,11 +1,9 @@
-import axios from 'axios';
-import { useAuthStore } from '../store/authStore';
-
 const api = axios.create({
   baseURL:
-    process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api',
+    process.env.NEXT_PUBLIC_API_URL ||
+    "https://vikas-sundriyal1.onrender.com/api",
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
