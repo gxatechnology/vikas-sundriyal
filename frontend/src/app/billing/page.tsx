@@ -172,23 +172,41 @@ export default function BillingPage() {
 
   const handleDownloadInvoice = (id: number, number: string) => {
     const token = localStorage.getItem('token');
-    const url = `http://localhost:5000/api/billing/invoices/${id}/pdf?token=${token}`;
+    const API_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  "https://vikas-sundriyal1.onrender.com/api";
+
+const url = `${API_URL}/billing/invoices/${id}/pdf?token=${token}`;
     window.open(url, '_blank');
   };
 
-  const handleGenerateQuotePDF = () => {
-    const chargesStr = encodeURIComponent(JSON.stringify(quoteForm.charges));
-    const url = `http://localhost:5000/api/billing/quote/pdf?companyName=${encodeURIComponent(
-      quoteForm.companyName
-    )}&contactPerson=${encodeURIComponent(quoteForm.contactPerson)}&email=${encodeURIComponent(
-      quoteForm.email
-    )}&origin=${encodeURIComponent(quoteForm.origin)}&destination=${encodeURIComponent(
-      quoteForm.destination
-    )}&mode=${encodeURIComponent(quoteForm.mode)}&grossWeight=${encodeURIComponent(
-      quoteForm.grossWeight
-    )}&commodity=${encodeURIComponent(quoteForm.commodity)}&charges=${chargesStr}`;
-    window.open(url, '_blank');
-  };
+ const handleGenerateQuotePDF = () => {
+  const chargesStr = encodeURIComponent(JSON.stringify(quoteForm.charges));
+
+  const API_URL =
+    process.env.NEXT_PUBLIC_API_URL ||
+    "https://vikas-sundriyal1.onrender.com/api";
+
+  const url = `${API_URL}/billing/quote/pdf?companyName=${encodeURIComponent(
+    quoteForm.companyName
+  )}&contactPerson=${encodeURIComponent(
+    quoteForm.contactPerson
+  )}&email=${encodeURIComponent(
+    quoteForm.email
+  )}&origin=${encodeURIComponent(
+    quoteForm.origin
+  )}&destination=${encodeURIComponent(
+    quoteForm.destination
+  )}&mode=${encodeURIComponent(
+    quoteForm.mode
+  )}&grossWeight=${encodeURIComponent(
+    quoteForm.grossWeight
+  )}&commodity=${encodeURIComponent(
+    quoteForm.commodity
+  )}&charges=${chargesStr}`;
+
+  window.open(url, "_blank");
+};
 
   return (
     <div className="space-y-6">
